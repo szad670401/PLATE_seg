@@ -12,7 +12,8 @@ import svm
 dir_T = "./Char_classify/T";
 dir_F = "./Char_classify/F";
 
-dir_folder = "./HasPlate"
+dir_folder = "./plate_repick"
+
 
 template = np.zeros((36,36,1),np.uint8);
 
@@ -145,25 +146,28 @@ def findSmallPeak(points,fixed,step = 10,epoch = 20 ):
 
     return c_pos;
 
-def verify(hw,angle):
 
-    A = [-1,-1];
 
-    if hw[0]<10 or hw[1]<10:
-        return False;
+def verify(hw,mostW,mostH,charx):
+    scale = hw[1]/float(hw[0]);
+    scale_common = mostH/float(mostW);
+    print "scale",scale,"scale_common",scale_common;
 
-    if(angle < -45 ):
-        A[0],A[1] = hw [1],hw [0];
-    else:
-        A[0],A[1]  = hw [0],hw [1];
 
-    ratio = A[1]/(A[0]+0.01);
+    if(scale > 4):
+        print charx, charx.sum()/((hw[1]*hw[0])*255) ;
 
-    if(ratio<6 and ratio>1.7 and A[0]>5):
 
-        return A
+        if( charx.sum()/((hw[1]*hw[0])*255) > 0.5):
 
-    return False
+            return True;
+
+
+    if(abs(scale_common - scale )< 0.5 and abs(mostW - hw[0]) < 6 ):
+        return True;
+
+    return False;
+
 
 def computeHistMax(A,min,max):
     range_x = np.zeros(max-min,dtype=np.int8)
@@ -212,14 +216,44 @@ def plateSegment(plate):
     contours = cv2.findContours(plate_thes,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE);
     list = contours[0];
     width_list = [];
+    height_list = [];
 
+    rects = [];
+
+
+    rects = [];
     for one in list:
         rot_rect = cv2.minAreaRect(one);
-        rot_rect_bounding = cv2.boundingRect(one);
+        rot_rect_bounding =np.array( cv2.boundingRect(one));
+
+        print "rot_rect_bounding",rot_rect_bounding;
+
         width_list.append(rot_rect_bounding[2]);
+        height_list.append(rot_rect_bounding[3]);
+
+        rects.append(rot_rect_bounding);
+
 
 
     val_most = computeHistMax(width_list,10,21);
+    height_most = computeHistMax(height_list,20,40);
+
+    print "val_most",val_most,"height_most",height_most;
+
+    for rect in rects:
+
+        p1 = (rect[0],rect[1])
+        p2 = (rect[0] + rect[2],rect[1] + rect[3])
+        char = plate[p1[1]:p2[1],p1[0]:p2[0]];
+
+
+        thes,newchar = cv2.threshold(char,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        if verify(rect[2:4],val_most,height_most,newchar):
+
+
+            cv2.rectangle(plate,p1,p2,(255,255,255));
+
+
 
     char_gap = val_most*0.288; #字符间隙
 
@@ -238,6 +272,8 @@ def plateSegment(plate):
     print "predict_seq_points",predict_seq_points
     for x in range(4):
         R  = 3;
+        print "searching Point",next_point
+
         peak_small= findSmallPeak( v_project,int(next_point));
         error = abs(peak_small - next_point);
 
@@ -295,7 +331,7 @@ for parent,dirnames,filenames in os.walk(dir_folder):
             x3 =  range(len(counts_derv))
 
             plt.subplot( "412")
-            plt.plot(x3,counts_derv);
+            plt.plot(x1,counts);
             plt.subplot("413")
             plt.plot(x2,counts2) ;
             plt.subplot("414")
