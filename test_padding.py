@@ -12,7 +12,7 @@ import svm
 dir_T = "./Char_classify/T";
 dir_F = "./Char_classify/F";
 
-dir_folder = "./plate_repick"
+dir_folder = "./HasPlate"
 
 
 template = np.zeros((36,36,1),np.uint8);
@@ -151,7 +151,6 @@ def findSmallPeak(points,fixed,step = 10,epoch = 20 ):
 def verify(hw,mostW,mostH,charx):
     scale = hw[1]/float(hw[0]);
     scale_common = mostH/float(mostW);
-    print "scale",scale,"scale_common",scale_common;
 
 
     if(scale > 4):
@@ -185,6 +184,13 @@ def computeHistMax(A,min,max):
 
 
 
+def rebuild(seq,char_whole):
+    for i in range(1,len(seq)):
+        diff = abs( seq[i] - seq[i-1]);
+
+        if(diff>1.2 * char_whole):
+            seq.insert(i-1,(seq[i] - seq[i-1]) / 2);
+
 def char_seg(IMG,table):
     List =[];
     for i in xrange(len(table)):
@@ -197,6 +203,21 @@ def char_seg(IMG,table):
 
         List.append(IMG[0:36,table[i-1]:table[i]])
     return List;
+
+def comp_cut_point(catained,uncatained,whole_char):
+    pos = 1 ;
+
+    for i in range(len(catained)):
+        one = catained[i]
+        for j in range(pos,len(uncatained)):
+            one_u = uncatained[j]
+            diff = abs(one - one_u)
+            if(diff < whole_char * 0.5 ):
+                print str( catained[i]) + "->"+str( uncatained[j]);
+                catained[i] = uncatained[j];
+                pos = j+1 ;
+                break;
+
 
 def plateSegment(plate):
     filter_hist = [];
@@ -220,13 +241,10 @@ def plateSegment(plate):
 
     rects = [];
 
-
-    rects = [];
     for one in list:
         rot_rect = cv2.minAreaRect(one);
-        rot_rect_bounding =np.array( cv2.boundingRect(one));
+        rot_rect_bounding = cv2.boundingRect(one);
 
-        print "rot_rect_bounding",rot_rect_bounding;
 
         width_list.append(rot_rect_bounding[2]);
         height_list.append(rot_rect_bounding[3]);
@@ -237,26 +255,43 @@ def plateSegment(plate):
 
     val_most = computeHistMax(width_list,10,21);
     height_most = computeHistMax(height_list,20,40);
-
     print "val_most",val_most,"height_most",height_most;
+    cutpoint  = [];
+
+    rects.sort(key = lambda  x:[x][0]);
 
     for rect in rects:
 
         p1 = (rect[0],rect[1])
         p2 = (rect[0] + rect[2],rect[1] + rect[3])
         char = plate[p1[1]:p2[1],p1[0]:p2[0]];
-
-
         thes,newchar = cv2.threshold(char,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        L_c_point = p1[0];
+        R_c_point = p2[0];
+
         if verify(rect[2:4],val_most,height_most,newchar):
+            if(len(cutpoint)  == 0  or  cutpoint[len(cutpoint)-1] == -1 ):
+                cutpoint.append(L_c_point);
+                cutpoint.append(R_c_point);
+
+            else:
+
+                cur_c_point = cutpoint[len(cutpoint)-1]
+                diff = abs(cur_c_point - L_c_point);
+                print "diff",diff
+
+                if(diff<val_most*0.8):
+                    cutpoint.append((cur_c_point+L_c_point)/2);
+                else:
+                    cutpoint.append(-1);
+
 
 
             cv2.rectangle(plate,p1,p2,(255,255,255));
-
+    print cutpoint;
 
 
     char_gap = val_most*0.288; #字符间隙
-
     char_whole = char_gap + val_most ; #一个整体字符的宽度  A unit of Char with the gap between two chars and the width of chars
     next_point =  sep + char_whole;
     region_point = sep  - char_whole;
@@ -282,11 +317,22 @@ def plateSegment(plate):
 
         next_point =  peak_small + char_whole
         seq_points.append(peak_small);
-
     seq_points.append(seq_points[len(seq_points)-1] + val_most);
     print "seq_points",seq_points
+    print "cut_points",cutpoint;
+
+    comp_cut_point(seq_points,cutpoint,char_whole);
+
+
+   # rebuild(seq_points,char_whole)
 
     char_imgs = char_seg(plate,seq_points);
+
+    print "char_imgs_num:",len(char_imgs)
+
+
+
+
 
     return char_imgs;
 

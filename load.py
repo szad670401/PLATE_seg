@@ -247,6 +247,7 @@ for parent,dirnames,filenames in os.walk(dir_folder):
 
 
             scontainer.sort(key = lambda x:[x][0][0])
+            print "sconationer_bounding",scontainer_bounding
             scontainer_bounding.sort(key = lambda  x:[x][0]);
             min_ = np.array([ abs(x[0]-96) for x in scontainer_bounding ]);
             mid = min_.argmin()
