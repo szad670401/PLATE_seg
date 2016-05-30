@@ -253,6 +253,7 @@ for parent,dirnames,filenames in os.walk(dir_folder):
             mid = min_.argmin()
 
 
+
             for m in range(mid,0,-1):
                 i_scontainer_bounding = scontainer_bounding[m];
                 i_scontainer_bounding_l = scontainer_bounding[m-1];

@@ -108,7 +108,7 @@ def display():
     #
 
 
-dir_chars = "/Users/yujinke/learning cpp/PLATE_seg/Char_classify"
+dir_chars = "./Fnt"
 
 #dir_chars = "/Users/yujinke/learning cpp/PLATE_seg/class"
 make_dataset(dir_chars);

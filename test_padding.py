@@ -12,7 +12,7 @@ import svm
 dir_T = "./Char_classify/T";
 dir_F = "./Char_classify/F";
 
-dir_folder = "./HasPlate"
+dir_folder = "./plate_repick"
 
 
 template = np.zeros((36,36,1),np.uint8);
@@ -65,7 +65,6 @@ def subthres(img1,cube_x,cube_y):
 
 
             return img2
-
 
 def findpeak(vector,depth):
     """先找到第一个较低点  然后再找到第二个较低点 如果第二个点 比 第一个点低 且 投影直方图中 第二个点也比第一个点低 即选用第一个点   """
@@ -146,8 +145,6 @@ def findSmallPeak(points,fixed,step = 10,epoch = 20 ):
 
     return c_pos;
 
-
-
 def verify(hw,mostW,mostH,charx):
     scale = hw[1]/float(hw[0]);
     scale_common = mostH/float(mostW);
@@ -167,7 +164,6 @@ def verify(hw,mostW,mostH,charx):
 
     return False;
 
-
 def computeHistMax(A,min,max):
     range_x = np.zeros(max-min,dtype=np.int8)
     offset = min ;
@@ -180,16 +176,6 @@ def computeHistMax(A,min,max):
     print "A.argmax",range_x.argmax()+min;
 
     return range_x.argmax()+min
-
-
-
-
-def rebuild(seq,char_whole):
-    for i in range(1,len(seq)):
-        diff = abs( seq[i] - seq[i-1]);
-
-        if(diff>1.2 * char_whole):
-            seq.insert(i-1,(seq[i] - seq[i-1]) / 2);
 
 def char_seg(IMG,table):
     List =[];
@@ -204,22 +190,7 @@ def char_seg(IMG,table):
         List.append(IMG[0:36,table[i-1]:table[i]])
     return List;
 
-def comp_cut_point(catained,uncatained,whole_char):
-    pos = 1 ;
-
-    for i in range(len(catained)):
-        one = catained[i]
-        for j in range(pos,len(uncatained)):
-            one_u = uncatained[j]
-            diff = abs(one - one_u)
-            if(diff < whole_char * 0.5 ):
-                print str( catained[i]) + "->"+str( uncatained[j]);
-                catained[i] = uncatained[j];
-                pos = j+1 ;
-                break;
-
-
-def plateSegment(plate):
+def plateSegment(plate,path = ""):
     filter_hist = [];
     v_hist = [] ;
 
@@ -240,7 +211,7 @@ def plateSegment(plate):
     height_list = [];
 
     rects = [];
-
+    cv2.line(img1,(sep,0),(sep,36),(255,255,255));
     for one in list:
         rot_rect = cv2.minAreaRect(one);
         rot_rect_bounding = cv2.boundingRect(one);
@@ -257,43 +228,23 @@ def plateSegment(plate):
     height_most = computeHistMax(height_list,20,40);
     print "val_most",val_most,"height_most",height_most;
     cutpoint  = [];
+    m_list=  [];
 
     rects.sort(key = lambda  x:[x][0]);
-
     for rect in rects:
 
         p1 = (rect[0],rect[1])
         p2 = (rect[0] + rect[2],rect[1] + rect[3])
         char = plate[p1[1]:p2[1],p1[0]:p2[0]];
-        thes,newchar = cv2.threshold(char,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-        L_c_point = p1[0];
-        R_c_point = p2[0];
+        thes,newchar = cv2.threshold(char,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU);
 
         if verify(rect[2:4],val_most,height_most,newchar):
-            if(len(cutpoint)  == 0  or  cutpoint[len(cutpoint)-1] == -1 ):
-                cutpoint.append(L_c_point);
-                cutpoint.append(R_c_point);
-
-            else:
-
-                cur_c_point = cutpoint[len(cutpoint)-1]
-                diff = abs(cur_c_point - L_c_point);
-                print "diff",diff
-
-                if(diff<val_most*0.8):
-                    cutpoint.append((cur_c_point+L_c_point)/2);
-                else:
-                    cutpoint.append(-1);
-
-
-
+            m_list.append(p1[0]);
             cv2.rectangle(plate,p1,p2,(255,255,255));
-    print cutpoint;
-
-
+    m_list = np.array(m_list);
     char_gap = val_most*0.288; #字符间隙
     char_whole = char_gap + val_most ; #一个整体字符的宽度  A unit of Char with the gap between two chars and the width of chars
-    next_point =  sep + char_whole;
+    next_point =  sep-char_gap*0.5 + char_whole;
     region_point = sep  - char_whole;
     region_point = findSmallPeak(v_project,region_point,1,10);
     province_Point = region_point - char_whole*0.95
@@ -302,26 +253,27 @@ def plateSegment(plate):
     seq_points.append(int(region_point));
     seq_points.append(sep);
     predict_seq_points =  []
+    for x in range(10):
+        filter_hist.insert(0,-1);
+        filter_hist.append(-1);
+    print len(filter_hist)
+    print len(v_project)
     for x in range(5):
         predict_seq_points.append(next_point+char_whole*x)
-    print "predict_seq_points",predict_seq_points
+
     for x in range(4):
         R  = 3;
-        print "searching Point",next_point
-
-        peak_small= findSmallPeak( v_project,int(next_point));
+        next_point = int(next_point)
+        peak_small= next_point-5 + np.array(v_project[next_point-5:next_point+10]).argmin()
         error = abs(peak_small - next_point);
-
         optimized_point = (next_point + peak_small)/2;
-        print "predict",next_point,"samll_peak",peak_small,"error:",error,"optimized:",optimized_point;
 
         next_point =  peak_small + char_whole
         seq_points.append(peak_small);
-    seq_points.append(seq_points[len(seq_points)-1] + val_most);
-    print "seq_points",seq_points
-    print "cut_points",cutpoint;
+    seq_points.append(seq_points[len(seq_points)-1] + val_most)
 
-    comp_cut_point(seq_points,cutpoint,char_whole);
+
+    #comp_cut_point(seq_points,cutpoint,char_whole);
 
 
    # rebuild(seq_points,char_whole)
@@ -350,7 +302,7 @@ for parent,dirnames,filenames in os.walk(dir_folder):
             img1 = cv2.imread(filepath,cv2.CV_LOAD_IMAGE_GRAYSCALE);
             counts = [];
            # print img1.shape;
-
+            #img1 = subthres(img1,16,18)
             for x in xrange(0,img1.shape[1] - 20,1):
                 char = img1[0:36,x:x+20];
                 we_char = char*template/(255*20*36)
@@ -358,8 +310,8 @@ for parent,dirnames,filenames in os.walk(dir_folder):
 
             counts2 = img1.sum(axis =  0 );
             counts_derv = abs(np.array(derivative(counts)))/(2*len(counts2));
-            char_sets = plateSegment(img1);
-
+            char_sets = plateSegment(img1,filename);
+            print filename
 
 
 

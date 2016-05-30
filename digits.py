@@ -78,6 +78,7 @@ class SVM(StatModel):
         self.model
     def predict(self, samples):
         return self.model.predict_all(samples).ravel()
+
     def predict_single(self,sample):
         return self.predict(np.array([sample]));
 
@@ -150,7 +151,6 @@ if __name__ == '__main__':
     model1 = SVM(C=1.67, gamma=0.083)
     model1.train(samples_train, labels_train)
     evaluate_model(model1, samples_test, labels_test)
-
 
     fileid  = open("./svm.pkl","wb")
 

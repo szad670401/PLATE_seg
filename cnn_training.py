@@ -53,9 +53,10 @@ net = Network([
 #         SoftmaxLayer(n_in=100, n_out=31)], mini_batch_size )
 
 
-net.SGD(training_data, 5 , mini_batch_size, 0.03, validation_data, test_data, lmbda=0.1)
-
+net.SGD(training_data,1, mini_batch_size, 0.03, validation_data, test_data, lmbda=0.1)
 training_x, training_y = training_data;
-print net.predict(training_x[0])
+print net.predict(training_x[0])#pridict
+
+
 cPickle.dump(net,open("./weights.pkl","wb"))
 

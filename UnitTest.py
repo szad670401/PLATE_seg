@@ -1,30 +1,24 @@
 __author__ = 'yujinke'
-import numpy as np;
-
-def findSmallPeak(points,fixed):
-    points = np.array(points)
-  #  min  =  points.argmin()
-    c_pos = fixed;
-    step = 1;
-    epoch = 20 ;
-
-    for i in range(epoch):
-
-        prev = points[c_pos - step];
-        back = points[c_pos + step];
-        if((c_pos - step) >= 0 and c_pos + step < len(points)):
+import numpy as np
 
 
-            if(prev > back):
-                symbol = 1;
-            if(prev <= back):
-                symbol = -1;
-            c_pos+= symbol;
-            print c_pos
+import cv2;
+SZ = 180
+def deskew(img):
+    m = cv2.moments(img)
+    if abs(m['mu02']) < 1e-2:
+        return img.copy()
+    skew = m['mu11']/m['mu02']
+    print skew
+    M = np.float32([[1, -5*skew, 5*SZ*skew], [0, 1, 0]])
+    print M
+    img = cv2.warpAffine(img, M, (SZ, SZ), flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR)
+    cv2.imshow("xx",img);
+    return img
 
-
-    return c_pos;
-
-
-print findSmallPeak([0.3,0.26,0.23,0.22,0.20,0.11,0.2,0.11,0.22,0.21,0.22,0.3],6);
-
+x =  cv2.imread("test4.png",cv2.CV_LOAD_IMAGE_GRAYSCALE);
+x = cv2.resize(x,(180,180))
+cv2.imshow("y",x);
+p = deskew(x);
+cv2.imshow("x",p);
+cv2.waitKey(0)
