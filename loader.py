@@ -40,9 +40,9 @@ mini_batch_size = 10
 #         FullyConnectedLayer(n_in=40*4*4, n_out=100, activation_fn=ReLU),
 #         SoftmaxLayer(n_in=100, n_out=31)], mini_batch_size )
 
+training_data1, validation_data1, test_data1 = cPickle.load(open("./data.pkl", 'rb'))
 
 
-net = cPickle.load(open("./weights.pkl","rb"))
+training_x, training_y = training_data1;
 
-training_x, training_y = training_data;
 print net.predict(training_x[0])

@@ -23,7 +23,15 @@ def rotRandrom(img,factor,size):
     pts2 = np.float32([[r(factor),r(factor)],[0,shape[0]-r(factor)],[shape[1]-r(factor),0],[shape[1]-r(factor),shape[0]-r(factor)]])
     M  = cv2.getPerspectiveTransform(pts1,pts2);
     dst = cv2.warpPerspective(img,M,(shape[0],shape[1]));
+
     return dst.ravel();
+
+
+
+img1 = cv2.imread("./Fnt/Sample011/img011-00001.png",cv2.CV_LOAD_IMAGE_GRAYSCALE);
+cv2.imshow("rot",rotRandrom(img1,1,[50,50]),);
+cv2.waitKey(0);
+
 
 
 # def rotRandrom(img,factor,size):
