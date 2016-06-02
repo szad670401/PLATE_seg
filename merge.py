@@ -28,7 +28,7 @@ def md5(src):
     myMd5_Digest = myMd5.hexdigest()
     return myMd5_Digest
 
-def merge_(dirn ):
+def merge_(dirn,output):
     set = [ ]
 
     def findinside(dirname):
@@ -43,7 +43,7 @@ def merge_(dirn ):
                         if(dirname.find("zh_")==-1):
                             img = cv2.bitwise_not(img);
 
-                        cv2.imwrite("./Char_classify/T/"+md5(img)+".jpg",img);
+                        cv2.imwrite(output + "/" +md5(img)+".jpg",img);
 
                 if(i>1000):
                     break;
@@ -117,4 +117,4 @@ def merge(dirn ):
 
 
 
-merge_("./chars2")
+merge_("./Fnt","./random")
