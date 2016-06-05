@@ -116,8 +116,6 @@ def rotRandrom(img,factor,size):
     #return dst.ravel();
 
 
-
-
 chaos_path_list = [];
 
 classify_list = [];
@@ -140,8 +138,19 @@ def test(dir):
 
 
 
+def Reavse(dirname):
+    for parent,dirnames,filenames in os.walk(dirname):
+        if(parent.startswith(dirname+"/")):
+            for filename in filenames:
+                path = parent + "/" + filename;
+                if(path.endswith(".jpg") or path.endswith(".png")):
+                    folder_path,file_path = os.path.split(path)
+                    if(file_path.startswith("img0")):
+                        img  = cv2.imread(path);
+                        img = cv2.bitwise_not(img)
+                        cv2.imwrite(path,img);
 
-test("./Fnt")
+
 
 def md5(src):
 
@@ -169,10 +178,14 @@ def generateOne(chaospaths,Normalfolders):
             print filename
             cv2.imwrite(folder+"/" + md5(filename)+".png",result);
 
-generateOne(chaos_path_list,classify_list);
 
 
+#
+# test("./Fnt_ao")
+# generateOne(chaos_path_list,classify_list);
+#
 
+Reavse("./Fnt")
 
 
 

@@ -44,12 +44,12 @@ def make_dataset(dirn):
 
                             set.append(img.ravel());
                             labels.append(code);
-            for i in range(adder):
-                c_index = int(np.random.rand() * len_d);
-                l_set = len(set)
-                set.append(rotrandom.rotRandrom( set[l_set-len_d + c_index],1,(size[0],size[1])));
-
-                labels.append(code);
+            # for i in range(adder):
+            #     c_index = int(np.random.rand() * len_d);
+            #     l_set = len(set)
+            #     set.append(rotrandom.rotRandrom( set[l_set-len_d + c_index],1,(size[0],size[1])));
+            #
+            #     labels.append(code);
 
         print len(set),dirname,len(filenames)
 
