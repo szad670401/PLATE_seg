@@ -138,14 +138,14 @@ if __name__ == '__main__':
     samples_test, labels_test = test_data
 
 
-    #
-    # print 'training KNearest...'
-    # model = KNearest(k=4)
-    # print samples_train.shape,labels_train.shape
-    #
-    # model.train(samples_train, labels_train)
-    #
-    # evaluate_model(model, samples_test, labels_test)
+
+    print 'training KNearest...'
+    model = KNearest(k=4)
+    print samples_train.shape,labels_train.shape
+
+    model.train(samples_train, labels_train)
+
+    evaluate_model(model, samples_test, labels_test)
 
     print 'training SVM...'
     model1 = SVM(C=1.67, gamma=0.083)

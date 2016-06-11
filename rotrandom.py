@@ -185,7 +185,7 @@ def generateOne(chaospaths,Normalfolders):
 # generateOne(chaos_path_list,classify_list);
 #
 
-Reavse("./Fnt")
+Reavse("./Fnt_ao")
 
 
 
